@@ -91,21 +91,27 @@ class SQLDatabase():
 
         # If our query returns
         self.execute(sql_query)
+        UID = 0
         if self.cur.fetchone():
-            self.fetch_friends_list([2,3])
+            self.fetch_friends_list([2,3], UID)
             return True
         else:
             return False
 
 
-    def fetch_friends_list(self, fl):
+    def fetch_friends_list(self, fl, UID):
         sql_queary = """SELECT * FROM Users"""
         self.cur.execute(sql_queary)
         p = "<p>Friends:</p>"
         result = self.cur.fetchall()
         for row in result:
             if row[0] in fl:
-                p += "<p>" + row[1] + "</p>"
+                p += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + " href='/chatroom'> " + row[1] + "</a><br>"
+        p += """<script>
+        function setUID(RID, SID){
+            document.cookie = "RID=RID; SID=SID"
+        }
+        </script>"""
 
         f = open("templates/temp.html", "w")
         f.write(p)

@@ -108,6 +108,29 @@ def post_login():
 
 #-----------------------------------------------------------------------------
 
+@get('/chatroom')
+def get_chatroom_controller():
+    '''
+        get_login
+
+        Serves the login page
+    '''
+    return model.chatroom()
+
+
+# -----------------------------------------------------------------------------
+
+@post('/chatroom')
+def post_chatroom():
+
+    # Handle the form processing
+    message = request.forms.get('message')
+    # Call the appropriate method
+    return model.store_message(message)
+
+
+# -----------------------------------------------------------------------------
+
 @get('/about')
 def get_about():
     '''

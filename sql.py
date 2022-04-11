@@ -16,6 +16,7 @@ class SQLDatabase():
     def __init__(self, database_arg=":memory:"):
         self.conn = sqlite3.connect(database_arg)
         self.cur = self.conn.cursor()
+        self.id = 0
 
     # SQLite 3 does not natively support multiple commands in a single statement
     # Using this handler restores this functionality
@@ -37,7 +38,7 @@ class SQLDatabase():
     
     # Sets up the database
     # Default admin password
-    def database_setup(self, admin_password='admin'):
+    def database_setup(self, admin_password='password'):
 
         # Clear the database if needed
         self.execute("DROP TABLE IF EXISTS Users")
@@ -52,9 +53,11 @@ class SQLDatabase():
         )""")
 
         self.commit()
-
         # Add our admin user
-        self.add_user('admin', admin_pasword, admin=1)
+        self.add_user('admin', admin_password, admin=1)
+        self.add_user('t1', admin_password, admin=1)
+        self.add_user('t2', admin_password, admin=1)
+        self.add_user('t3', admin_password, admin=1)
 
     #-----------------------------------------------------------------------------
     # User handling
@@ -66,8 +69,9 @@ class SQLDatabase():
                 INSERT INTO Users
                 VALUES({id}, '{username}', '{password}', {admin})
             """
-
-        sql_cmd = sql_cmd.format(username=username, password=password, admin=admin)
+        
+        self.id += 1
+        sql_cmd = sql_cmd.format(id = self.id, username=username, password=password, admin=admin)
 
         self.execute(sql_cmd)
         self.commit()
@@ -86,7 +90,23 @@ class SQLDatabase():
         sql_query = sql_query.format(username=username, password=password)
 
         # If our query returns
-        if cur.fetchone():
+        self.execute(sql_query)
+        if self.cur.fetchone():
+            self.fetch_friends_list([2,3])
             return True
         else:
             return False
+
+
+    def fetch_friends_list(self, fl):
+        sql_queary = """SELECT * FROM Users"""
+        self.cur.execute(sql_queary)
+        p = "<p>Friends:</p>"
+        result = self.cur.fetchall()
+        for row in result:
+            if row[0] in fl:
+                p += "<p>" + row[1] + "</p>"
+
+        f = open("templates/temp.html", "w")
+        f.write(p)
+        f.close()

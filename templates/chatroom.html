@@ -1,0 +1,64 @@
+<p id="chatlog">${newMessages}</p>
+<p id="newMessages"></p>
+<form id="chatroom" method="post" >
+    <input name="message" type="text" id="message"/>
+</br>
+    <button type="submit">Send</button>
+</form>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+<script>
+
+    $(document).ready(function() {
+        var key = getCookie("bobkey")
+
+        var newMessage = document.getElementById("chatlog").innerHTML
+        var newMessages = document.getElementById("newMessages")
+        if (newMessage.length != 2){
+            var newMessage = newMessage.split("['")[1]
+            var newMessage = newMessage.split("']")[0]
+            var messageArray = newMessage.split(" ")
+
+            for (let i = 0; i < messageArray.length; i++) {
+                var decryptedMessage = CryptoJS.AES.decrypt(messageArray[i], key)
+                var li = document.createElement("p");
+                li.appendChild(document.createTextNode(decryptedMessage.toString(CryptoJS.enc.Utf8)));
+                newMessages.appendChild(li);
+            }
+            document.getElementById("chatlog").innerHTML = ""
+        }
+        // Submit form
+        $("#chatroom").submit(function (event) {
+            var data = new FormData();
+            event.preventDefault();
+            var message = $("#message").val();
+            var encryptedMessage = CryptoJS.AES.encrypt(message, key)
+            data.append('message', encryptedMessage);
+            $.ajax({
+                url: "https://127.0.0.1:8081/chatroom",
+                data: data,
+                cache: false,
+                processData: false,
+                contentType: false,
+                type: 'POST'
+            });
+            document.getElementById("message").innerHTML = ""
+        })
+    });
+
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for(let i = 0; i <ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+</script>

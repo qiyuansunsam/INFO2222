@@ -7,6 +7,7 @@
 '''
 import view
 import random
+from sql import SQLDatabase
 
 # Initialise our views, all arguments are defaults for the template
 page_view = view.View()
@@ -49,22 +50,34 @@ def login_check(username, password):
 
     # By default assume good creds
     login = True
+    test1 = SQLDatabase("Users.db")
+    print(password)
+    login = test1.check_credentials(username, password)
+    #if username != "admin": # Wrong Username
+    #    err_str = "Incorrect Username"
+    #    login = False
     
-    if username != "admin": # Wrong Username
-        err_str = "Incorrect Username"
-        login = False
-    
-    if password != "password": # Wrong password
-        err_str = "Incorrect Password"
-        login = False
-        
+    #if password != "password": # Wrong password
+    #   err_str = "Incorrect Password"
+    #   login = False
+    err_str = "Incorrect Password"
     if login: 
-        return page_view("valid", name=username)
+        return page_view("temp", name=username)
     else:
         return page_view("invalid", reason=err_str)
 
 #-----------------------------------------------------------------------------
-# About
+def chatroom():
+    with open('chatlog.txt') as f:
+        lines = f.readlines()
+    return page_view("chatroom", newMessages = lines)
+
+#-----------------------------------------------------------------------------
+def store_message(message):
+    print(message)
+    with open("chatlog.txt", "a") as f:
+        f.write(message+" ")
+    return page_view("chatroom")
 #-----------------------------------------------------------------------------
 
 def about():

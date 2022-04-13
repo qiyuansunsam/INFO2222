@@ -44,20 +44,16 @@ def run_server():
         run_server
         Runs a bottle server
     '''
-    run(host=host, port=port, debug=debug)
+    print("running")
+    run(host='127.0.0.1', port=8081)#, server='gunicorn',keyfile='/home/heyman/certs/localhost.key',reloader=1,certfile='/home/heyman/certs/localhost.crt', debug=debug)
+
 
 #-----------------------------------------------------------------------------
 # Optional SQL support
 # Comment out the current manage_db function, and 
 # uncomment the following one to load an SQLite3 database
 
-def manage_db():
-    '''
-        Blank function for database support, use as needed
-    '''
-    pass
 
-"""
 import sql
     
 def manage_db():
@@ -66,10 +62,14 @@ def manage_db():
         Starts up and re-initialises an SQL databse for the server
     '''
     database_args = ":memory:" # Currently runs in RAM, might want to change this to a file if you use it
-    sql_db = sql.SQLDatabase(database_args=database_args)
+    sql_db = sql.SQLDatabase("samnchad.db")
+    sql_db.database_setup("admin")
+    print("hello")
+
+    
 
     return
-"""
+
 
 #-----------------------------------------------------------------------------
 

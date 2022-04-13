@@ -1,4 +1,8 @@
 import sqlite3
+from Crypto.Random import get_random_bytes
+from Crypto.Hash import SHA256
+import bcrypt
+import random
 
 
 # This class is a simple handler for all of our SQL database actions
@@ -47,13 +51,34 @@ class SQLDatabase():
 
         # Create the users table
         self.execute("""CREATE TABLE Users(
-            Id INT,
-            username TEXT,
+            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
             password TEXT,
             admin INTEGER DEFAULT 0
         )""")
 
         self.commit()
+
+        # Add our admin user
+
+        self.execute("""CREATE TABLE IF NOT EXISTS chatlink(
+            CID INTEGER PRIMARY KEY AUTOINCREMENT,
+            UIDSEND INT references Users(Id),
+            UIDRECIEVE INT references Users(Id));""")
+        self.commit()
+
+        self.execute("""CREATE TABLE IF NOT EXISTS chatlog(
+            CID INT references chatlink(CID),
+            message TEXT,
+            timestmp TIMESTAMP);""")
+        self.commit()
+
+        self.execute("""CREATE TABLE IF NOT EXISTS salts(
+            Id INTEGER UNIQUE references Users(Id),
+            salt TEXT);""")
+        self.commit()
+
+        
         # Add our admin user
         self.add_user('admin', admin_password, admin=1)
         self.add_user('t1', admin_password, admin=1)
@@ -66,16 +91,48 @@ class SQLDatabase():
 
     # Add a user to the database
     def add_user(self, username, password, admin=0):
+        ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        chars=[]
+        for i in range(16):
+            chars.append(random.choice(ALPHABET))
+        salt = "".join(chars)
+        print(salt)
+        print(password)
+        password = password+salt
+        hashobj = SHA256.new(data=password.encode())
+        hashedpass = hashobj.hexdigest()
+        print(hashedpass)
+
         sql_cmd = """
-                INSERT INTO Users
-                VALUES({id}, '{username}', '{password}', {admin})
+                INSERT INTO Users(username,password,admin)
+                VALUES('{username}', '{password}', {admin})
             """
 
-        self.id += 1
-        sql_cmd = sql_cmd.format(id=self.id, username=username, password=password, admin=admin)
-
+        sql_cmd = sql_cmd.format(username=username, password=hashedpass, admin=admin) 
         self.execute(sql_cmd)
         self.commit()
+
+        sql_query = """
+            SELECT Id 
+            FROM Users
+            WHERE username like '{username}'
+        """
+        sql_query = sql_query.format(username=username)
+        self.execute(sql_query)
+        result = self.cur.fetchall()
+        Id = result[0][0]
+        
+   
+
+        sql_cmd = """
+            INSERT INTO salts(Id,salt)
+            VALUES('{Id}','{salt}')
+            """
+
+        sql_cmd=sql_cmd.format(Id=Id,salt=salt)
+        self.execute(sql_cmd)
+        self.commit()
+
         return True
 
     # -----------------------------------------------------------------------------
@@ -83,22 +140,58 @@ class SQLDatabase():
     # Check login credentials
     def check_credentials(self, username, password):
         sql_query = """
-                SELECT Id 
-                FROM Users
-                WHERE username = '{username}' AND password = '{password}'
-            """
-
-        sql_query = sql_query.format(username=username, password=password)
-
-        # If our query returns
+            SELECT Id,password
+            FROM Users
+            WHERE username like '{username}'
+        """
+        sql_query = sql_query.format(username=username)
         self.execute(sql_query)
-        temp = self.cur.fetchone()
-        if temp:
-            UID = temp[0]
-            self.fetch_friends_list([2, 3], UID)
-            return True
+        result = self.cur.fetchone()
+        if result:
+            Id = result[0]
+            passwordstored = result[1]
+            print(Id)
+            print(passwordstored)
+
+            sql_query = """
+                    SELECT salt
+                    FROM salts
+                    WHERE Id = '{Id}'
+                """
+            sql_query = sql_query.format(Id=Id)
+            test = self.execute(sql_query)
+
+            salt = self.cur.fetchone()
+            print(salt)
+
+            # If our query returns
+            if salt:
+                sql_query = """
+                    SELECT 1
+                    FROM Users
+                    Where password like '{hash}' and username like '{username}'
+                """
+                concat = password+salt[0]
+                print(concat)
+                hashobj = SHA256.new(data=concat.encode())
+                hashs = hashobj.hexdigest()
+                print(hashs)
+                sql_query = sql_query.format(hash=hashs,username=username)
+                self.execute(sql_query)
+                if self.cur.fetchone():
+                    #Get friends list function that returns array of friends
+                    #pass in array of friends where [2,3] is 
+                    self.fetch_friends_list([2, 3], Id)
+                    return True
+                else:
+                    return False
+            else:
+                return False
+
         else:
             return False
+
+    
 
     def fetch_friends_list(self, fl, UID):
         sql_queary = """SELECT * FROM Users"""
@@ -121,3 +214,76 @@ class SQLDatabase():
         f = open("templates/temp.html", "w")
         f.write(p)
         f.close()
+
+    #Extra stuff.
+
+    #Creates two chatlink entries, one for UIDSEND,UIDRECIEVE, and one for UIDRECIEVE,UIDSEND
+    # - only called if one of the two entries does not exist already in a table
+    # Since this creates both entries, we can assume that if one exists, the other does as well
+    
+    def create_chatlink(self,UIDSEND,UIDRECIEVE):
+        sql_cmd = """
+                INSERT into chatlink(UIDSEND,UIDRECIEVE)
+                VALUES({UIDSEND},{UIDRECIEVE})
+            """
+        sql_cmd = sql_cmd.format(UIDSEND=UIDSEND, UIDRECIEVE=UIDRECIEVE)
+        self.execute(sql_cmd)
+        self.commit()
+        sql_cmd = """
+                INSERT into chatlink(UIDSEND,UIDRECIEVE)
+                VALUES({UIDRECIEVE},{UIDSEND})
+            """
+        sql_cmd = sql_cmd.format(UIDSEND=UIDSEND, UIDRECIEVE=UIDRECIEVE)
+        self.execute(sql_cmd)
+        self.commit()
+        return True
+
+    #Checks to see if a chatlink between sender and reciever exists in table, if it does not exist, create a new one
+    def check_chatlink(self,UIDSEND,UIDRECIEVE):
+
+        sql_query = """
+                SELECT 1 
+                FROM chatlink
+                WHERE UIDSEND = '{UIDSEND}' AND UIDRECIEVE = '{UIDRECIEVE}'
+            """
+
+        sql_query = sql_query.format(UIDSEND=UIDSEND, UIDRECIEVE=UIDRECIEVE)
+        self.execute(sql_query)
+        # If our query returns
+        if self.cur.fetchone():
+            return True
+        else:
+            return False
+
+    #Self explanatory
+    def add_chatlog(self,CID,message):
+        sql_cmd = """
+                INSERT into chatlog
+                VALUES({CID},'{message}',CURRENT_TIMESTAMP)
+            """
+        sql_cmd = sql_cmd.format(CID=CID,message=message)
+        self.execute(sql_cmd)
+        self.commit()
+        return True
+
+
+
+    #SQL query takes in UID send and RECIEVE, joins the messages retrieved, then orders by time sent for chronological order
+    #returns a tuple at the moment
+    def get_chatlog(self,UIDSEND,UIDRECIEVE):
+        sql_cmd = """
+                Select message,timestmp from chatlog
+                Where chatlog.CID = (SELECT chatlink.CID from chatlink where UIDSEND = {UIDSEND} and UIDRECIEVE = {UIDRECIEVE})
+                UNION
+                Select message,timestmp from chatlog
+                Where chatlog.CID = (SELECT chatlink.CID from chatlink where UIDSEND = {UIDRECIEVE} and UIDRECIEVE = {UIDSEND})
+                ORDER BY timestmp
+            """
+        sql_cmd = sql_cmd.format(UIDSEND=UIDSEND, UIDRECIEVE=UIDRECIEVE)
+        print(sql_cmd)
+        self.execute(sql_cmd)
+        j = self.cur.fetchall()
+        print(j[0])
+        for x in j :
+            print(x)
+        return j

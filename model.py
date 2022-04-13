@@ -7,11 +7,12 @@
 '''
 import view
 import random
-from sql import SQLDatabase
+import sql
+
 
 # Initialise our views, all arguments are defaults for the template
 page_view = view.View()
-
+sql_db = sql.SQLDatabase("samnchad.db")
 #-----------------------------------------------------------------------------
 # Index
 #-----------------------------------------------------------------------------
@@ -48,8 +49,8 @@ def login_check(username, password):
 
     # By default assume good creds
     login = True
-    test1 = SQLDatabase("Users.db")
-    login = test1.check_credentials(username, password)
+    
+    login = sql_db.check_credentials(username, password)
     #if username != "admin": # Wrong Username
     #    err_str = "Incorrect Username"
     #    login = False

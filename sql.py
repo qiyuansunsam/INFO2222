@@ -1,7 +1,8 @@
 import sqlite3
 
+
 # This class is a simple handler for all of our SQL database actions
-# Practicing a good separation of concerns, we should only ever call 
+# Practicing a good separation of concerns, we should only ever call
 # These functions from our models
 
 # If you notice anything out of place here, consider it to your advantage and don't spoil the surprise
@@ -16,7 +17,7 @@ class SQLDatabase():
     def __init__(self, database_arg=":memory:"):
         self.conn = sqlite3.connect(database_arg)
         self.cur = self.conn.cursor()
-        self.id = 0
+        self.id = 1
 
     # SQLite 3 does not natively support multiple commands in a single statement
     # Using this handler restores this functionality
@@ -34,8 +35,8 @@ class SQLDatabase():
     def commit(self):
         self.conn.commit()
 
-    #-----------------------------------------------------------------------------
-    
+    # -----------------------------------------------------------------------------
+
     # Sets up the database
     # Default admin password
     def database_setup(self, admin_password='password'):
@@ -59,9 +60,9 @@ class SQLDatabase():
         self.add_user('t2', admin_password, admin=1)
         self.add_user('t3', admin_password, admin=1)
 
-    #-----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
     # User handling
-    #-----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
 
     # Add a user to the database
     def add_user(self, username, password, admin=0):
@@ -69,20 +70,20 @@ class SQLDatabase():
                 INSERT INTO Users
                 VALUES({id}, '{username}', '{password}', {admin})
             """
-        
+
         self.id += 1
-        sql_cmd = sql_cmd.format(id = self.id, username=username, password=password, admin=admin)
+        sql_cmd = sql_cmd.format(id=self.id, username=username, password=password, admin=admin)
 
         self.execute(sql_cmd)
         self.commit()
         return True
 
-    #-----------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------
 
     # Check login credentials
     def check_credentials(self, username, password):
         sql_query = """
-                SELECT 1 
+                SELECT Id 
                 FROM Users
                 WHERE username = '{username}' AND password = '{password}'
             """
@@ -91,25 +92,29 @@ class SQLDatabase():
 
         # If our query returns
         self.execute(sql_query)
-        UID = 0
-        if self.cur.fetchone():
-            self.fetch_friends_list([2,3], UID)
+        temp = self.cur.fetchone()
+        if temp:
+            UID = temp[0]
+            self.fetch_friends_list([2, 3], UID)
             return True
         else:
             return False
-
 
     def fetch_friends_list(self, fl, UID):
         sql_queary = """SELECT * FROM Users"""
         self.cur.execute(sql_queary)
         p = "<p>Friends:</p>"
         result = self.cur.fetchall()
+        print("")
         for row in result:
             if row[0] in fl:
-                p += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + " href='/chatroom'> " + row[1] + "</a><br>"
+                p += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + ") href='/chatroom'> " + row[1] + "</a><br>"
+            elif row[0] != UID:
+                p += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + ") href='/addfriend'> add friend: " + row[1] + "</a><br>"
         p += """<script>
         function setUID(RID, SID){
-            document.cookie = "RID=RID; SID=SID"
+            document.cookie = "RID="+RID
+            document.cookie = "SID="+SID
         }
         </script>"""
 

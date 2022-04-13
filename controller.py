@@ -110,11 +110,7 @@ def post_login():
 
 @get('/chatroom')
 def get_chatroom_controller():
-    '''
-        get_login
 
-        Serves the login page
-    '''
     return model.chatroom()
 
 
@@ -125,10 +121,32 @@ def post_chatroom():
 
     # Handle the form processing
     message = request.forms.get('message')
+    if message is not None:
+        return model.store_message(message)
+    
+    SID = request.forms.get('SID')
+    RID = request.forms.get('RID')
+    return model.get_message(SID, RID)
     # Call the appropriate method
-    return model.store_message(message)
 
 
+
+# -----------------------------------------------------------------------------
+@get('/addfriend')
+def get_add_friend_controller():
+
+    return model.add_friend_page()
+
+
+# -----------------------------------------------------------------------------
+
+@post('/addfriend')
+def post_addfriend():
+    SID = request.forms.get('SID')
+    RID = request.forms.get('RID')
+    message = request.forms.get('message')
+    resType = request.forms.get('resType')
+    return model.add_friend(SID, RID, message, resType)
 # -----------------------------------------------------------------------------
 
 @get('/about')

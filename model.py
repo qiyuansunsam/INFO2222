@@ -41,43 +41,62 @@ def login_check(username, password):
     '''
         login_check
         Checks usernames and passwords
-
         :: username :: The username
         :: password :: The password
-
         Returns either a view for valid credentials, or a view for invalid credentials
     '''
 
     # By default assume good creds
     login = True
     test1 = SQLDatabase("Users.db")
-    print(password)
     login = test1.check_credentials(username, password)
     #if username != "admin": # Wrong Username
     #    err_str = "Incorrect Username"
     #    login = False
-    
+
     #if password != "password": # Wrong password
     #   err_str = "Incorrect Password"
     #   login = False
     err_str = "Incorrect Password"
-    if login: 
+    if login:
         return page_view("temp", name=username)
     else:
         return page_view("invalid", reason=err_str)
 
 #-----------------------------------------------------------------------------
 def chatroom():
-    with open('chatlog.txt') as f:
-        lines = f.readlines()
-    return page_view("chatroom", newMessages = lines)
+    return page_view("chatroom")
 
 #-----------------------------------------------------------------------------
 def store_message(message):
-    print(message)
     with open("chatlog.txt", "a") as f:
         f.write(message+" ")
     return page_view("chatroom")
+#-----------------------------------------------------------------------------
+def get_message(SID, RID):
+    with open("chatlog.txt", "r") as f:
+        lines = f.readlines()
+    return lines
+#-----------------------------------------------------------------------------
+def add_friend_page():
+    return page_view("addfriend")
+
+#-----------------------------------------------------------------------------
+def add_friend(SID, RID, message, resType):
+    if (resType == "pull"):
+        with open("temp.txt", "r") as f:
+            line = f.readlines()
+        return line
+    if (resType == "rsaPublicKey"):
+        with open("temp.txt", "w") as f:
+            rpk = "rsaPublicKey "+message
+            f.write(rpk)
+        return ""
+    if (resType == "SSK"):
+        with open("temp.txt", "w") as f:
+            rpk = "SSK "+message
+            f.write(rpk)
+        return ""
 #-----------------------------------------------------------------------------
 
 def about():
@@ -95,7 +114,7 @@ def about_garble():
         about_garble
         Returns one of several strings for the about page
     '''
-    garble = ["leverage agile frameworks to provide a robust synopsis for high level overviews.", 
+    garble = ["leverage agile frameworks to provide a robust synopsis for high level overviews.",
     "iterate approaches to corporate strategy and foster collaborative thinking to further the overall value proposition.",
     "organically grow the holistic world view of disruptive innovation via workplace change management and empowerment.",
     "bring to the table win-win survival strategies to ensure proactive and progressive competitive domination.",

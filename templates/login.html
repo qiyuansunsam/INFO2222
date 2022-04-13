@@ -2,13 +2,36 @@
 Login with a username and password
 </p>
 <p>
-<form action="/login" method="post">
-    Username: <input name="username" type="text" />
+
+<form action="/login" id="login" method="post" >
+    Username: <input name="username" type="text" id="username"/>
 </br>
-    Password: <input name="password" type="password" />
+    Password: <input name="password" type="password" id="password"/>
 </br>
     <input value="Login" type="submit" />
 </form>
+<script>
+var form = document.getElementById('login')
+
+form.addEventListener('submit', function(e){
+    e.preventDefualt()
+
+    var username = document.getEelementById('username')
+    var password = document.getEelementById('password')
+    var encryptedPassword = CrytoJS.AES.encrypt(password.value, "ChiperKEY")
+
+    fetch("https://127.0.0.1:8081/login", {
+        method:'POST',
+        body:JSON.stringify({
+            username:username,
+            password:encryptedPassword
+        }),
+        headers:{
+            "content-Type":"application/json; charset=UTF-8"
+        }
+    })
+})
+</script>
 </p>
 </center>
 

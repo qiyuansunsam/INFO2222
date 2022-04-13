@@ -32,6 +32,9 @@ function myCallback(response,SID, RID) {
 
     if (response == ""){
         const rsaKey = cryptico.generateRSAKey("",1024);
+        const rsaPublicKey = cryptico.publicKeyString(rsaKey);
+
+
         var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
         var keyObj = {};
         parametersBigint.forEach(function(parameter){
@@ -39,21 +42,22 @@ function myCallback(response,SID, RID) {
         });
         privateKeyString = JSON.stringify(keyObj);
         document.cookie = "pk=" + privateKeyString
-        console.log(privateKeyString)
-        const rsaPublicKey = cryptico.publicKeyString(rsaKey);
+
+
         data.append("message",rsaPublicKey)
         data.append("resType","rsaPublicKey")
         document.getElementById("message").innerHTML = "request sent"
     } else {
         responseArray = response.split(" ")
         if(responseArray[0] == "rsaPublicKey"){
-            const SSK = "shared secret"
-            const encryptedSSK = CryptoJS.AES.encrypt(SSK, responseArray[1])
+            var SSK = keyGen()
+            const encryptedSSK = cryptico.encrypt(SSK, responseArray[1]).cipher
             data.append("message",encryptedSSK)
             data.append("resType","SSK")
             document.getElementById("message").innerHTML = "request confirmed"
         } else if(responseArray[0] == "SSK"){
             const privateKeyString = getCookie("pk")
+            document.cookie = 'pk=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
             var keyObj = JSON.parse(privateKeyString);
             var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
             var rsa = new RSAKey();
@@ -62,10 +66,10 @@ function myCallback(response,SID, RID) {
             });
             rsa.e = parseInt("03", 16);
             var privateKey = rsa
-            console.log(privateKeyString)
-            const decryptedSSK = CryptoJS.AES.decrypt(responseArray[1], privateKey)
-            console.log(decryptedSSK.toString())
-            document.cookie = RID+"key="+decryptedSSK
+            const decryptedSSK = cryptico.decrypt(responseArray[1], privateKey)
+            document.cookie = RID+"key="+decryptedSSK.plaintext
+            data.append("message","")
+            data.append("resType","confirmed")
             document.getElementById("message").innerHTML = "friend added"
         }
     }
@@ -86,6 +90,17 @@ $(document).ready(function() {
     loadLog(SID, RID)
     // Submit form
 });
+
+function keyGen() {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < 16; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+
 
 function getCookie(cname) {
         let name = cname + "=";

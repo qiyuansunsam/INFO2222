@@ -45,7 +45,7 @@ def run_server():
         Runs a bottle server
     '''
     print("running")
-    run(host='127.0.0.1', port=8081)#, server='gunicorn',keyfile='/home/heyman/certs/localhost.key',reloader=1,certfile='/home/heyman/certs/localhost.crt', debug=debug)
+    run(host='127.0.0.1', port=8081, server='gunicorn',keyfile='/home/heyman/certs/localhost.key',reloader=1,certfile='/home/heyman/certs/localhost.crt', debug=debug)
 
 
 #-----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ def run_server():
 
 
 import sql
-    
+
 def manage_db():
     '''
         manage_db

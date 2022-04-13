@@ -78,6 +78,13 @@ class SQLDatabase():
             salt TEXT);""")
         self.commit()
 
+        self.execute("""CREATE TABLE IF NOT EXSITS exchange(
+            UIDSEND INT references Users(Id),
+            UIDRECIEVE INT references Users(Id),
+            key TEXT,
+            timestmp TIMESTAMP);""")
+        self.commit()
+
         
         # Add our admin user
         self.add_user('admin', admin_password, admin=1)
@@ -88,6 +95,45 @@ class SQLDatabase():
     # -----------------------------------------------------------------------------
     # User handling
     # -----------------------------------------------------------------------------
+   
+    #Testing issue - check that firsttuple[0] is correct
+    def pull(self,SID,RID):
+        sql_query = """
+            SELECT key,timestmp 
+            FROM exchange
+            WHERE UIDSEND like {SID} and UIDRECIEVE like {RID}
+            ORDER BY timestmp DESC;
+        """
+        sql_query = sql_query.format(SID=SID,RID=RID)
+        self.execute(sql_query)
+        firsttuple = self.cur.fetchone()
+        if firsttuple:
+            return firsttuple[0]
+        else:
+            return ""
+
+    def write_key(self,SID,RID,key):
+        sql_statement = """
+                INSERT into exchange
+                VALUES({SID},{RID},'{key}',CURRENT_TIMESTAMP)
+            """
+        sql_statement = sql_statement.format(SID=SID,RID=RID,key=key)
+        self.execute(sql_statement)
+        self.commit()
+
+
+    #SQL here might not be 100% correct - also 
+    #Need to check that in exchange table, row where RID,SID,key is the ROw that the SSK is sent in if not just need to swap SID and RID
+    def wipekeys(self,SID,RID):
+        sql_statement = """
+                UPDATE exchange
+                SET key = 'wipe'
+                WHERE
+                UIDSEND like {RID} and UIDRECIEVE like {SID}
+            """
+        sql_statement = sql_statement.format(RID=RID,SID=SID)
+        self.execute(sql_statement)
+        self.commit()
 
     # Add a user to the database
     def add_user(self, username, password, admin=0):
@@ -192,7 +238,9 @@ class SQLDatabase():
             return False
 
     
-
+    # TESTING ISSUE - check_chatlink returns the right variable (could be returning a tuple or something)
+    # Need to remove fl since it is unused
+    #
     def fetch_friends_list(self, fl, UID):
         sql_queary = """SELECT * FROM Users"""
         self.cur.execute(sql_queary)
@@ -200,7 +248,8 @@ class SQLDatabase():
         result = self.cur.fetchall()
         print("")
         for row in result:
-            if row[0] in fl:
+            check = self.check_chatlink(UID,row[0])
+            if check is not None:
                 p += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + ") href='/chatroom'> " + row[1] + "</a><br>"
             elif row[0] != UID:
                 p += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + ") href='/addfriend'> add friend: " + row[1] + "</a><br>"
@@ -239,21 +288,23 @@ class SQLDatabase():
         return True
 
     #Checks to see if a chatlink between sender and reciever exists in table, if it does not exist, create a new one
+    #TESTING issue - might not return correctly
     def check_chatlink(self,UIDSEND,UIDRECIEVE):
 
         sql_query = """
-                SELECT 1 
+                SELECT CID 
                 FROM chatlink
                 WHERE UIDSEND = '{UIDSEND}' AND UIDRECIEVE = '{UIDRECIEVE}'
             """
 
         sql_query = sql_query.format(UIDSEND=UIDSEND, UIDRECIEVE=UIDRECIEVE)
         self.execute(sql_query)
+        chatID = self.cur.fetchone()
         # If our query returns
-        if self.cur.fetchone():
-            return True
+        if chatID:
+            return chatID[0]
         else:
-            return False
+            return None
 
     #Self explanatory
     def add_chatlog(self,CID,message):
@@ -270,6 +321,7 @@ class SQLDatabase():
 
     #SQL query takes in UID send and RECIEVE, joins the messages retrieved, then orders by time sent for chronological order
     #returns a tuple at the moment
+    #TESTING issue - Might not return correctly
     def get_chatlog(self,UIDSEND,UIDRECIEVE):
         sql_cmd = """
                 Select message,timestmp from chatlog
@@ -283,7 +335,7 @@ class SQLDatabase():
         print(sql_cmd)
         self.execute(sql_cmd)
         j = self.cur.fetchall()
-        print(j[0])
-        for x in j :
-            print(x)
-        return j
+        messagelist = []
+        for line in j:
+            messagelist.append(line[0])
+        return messagelist

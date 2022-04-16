@@ -150,6 +150,7 @@ def post_addfriend():
     RID = request.forms.get('RID')
     message = request.forms.get('message')
     resType = request.forms.get('resType')
+    print(resType)
     return model.add_friend(SID, RID, message, resType)
 # -----------------------------------------------------------------------------
 

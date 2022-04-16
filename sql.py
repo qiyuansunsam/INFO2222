@@ -18,7 +18,7 @@ class SQLDatabase():
     '''
 
     # Get the database running
-    def __init__(self, database_arg=":memory:"):
+    def __init__(self, database_arg):
         self.conn = sqlite3.connect(database_arg)
         self.cur = self.conn.cursor()
         self.id = 1
@@ -78,7 +78,7 @@ class SQLDatabase():
             salt TEXT);""")
         self.commit()
 
-        self.execute("""CREATE TABLE IF NOT EXSITS exchange(
+        self.execute("""CREATE TABLE IF NOT EXISTS exchange(
             UIDSEND INT references Users(Id),
             UIDRECIEVE INT references Users(Id),
             key TEXT,
@@ -101,13 +101,18 @@ class SQLDatabase():
         sql_query = """
             SELECT key,timestmp 
             FROM exchange
-            WHERE UIDSEND like {SID} and UIDRECIEVE like {RID}
+            WHERE (UIDSEND like {SID} and UIDRECIEVE like {RID}) OR (UIDSEND like {RID} and UIDRECIEVE like {SID})
             ORDER BY timestmp DESC;
         """
+        print(SID)
+        print(RID)
         sql_query = sql_query.format(SID=SID,RID=RID)
+        print(sql_query)
         self.execute(sql_query)
-        firsttuple = self.cur.fetchone()
+        firsttuple = self.cur.fetchall()
+        print(firsttuple)
         if firsttuple:
+            
             return firsttuple[0]
         else:
             return ""
@@ -142,12 +147,15 @@ class SQLDatabase():
         for i in range(16):
             chars.append(random.choice(ALPHABET))
         salt = "".join(chars)
-        print(salt)
-        print(password)
+        print("adding user")
+        print("user deets")
         password = password+salt
+        print(username)
+        print(password)
         hashobj = SHA256.new(data=password.encode())
         hashedpass = hashobj.hexdigest()
         print(hashedpass)
+        print('end user')
 
         sql_cmd = """
                 INSERT INTO Users(username,password,admin)

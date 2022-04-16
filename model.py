@@ -96,22 +96,27 @@ def add_friend_page():
 
 
 def add_friend(SID, RID, message, resType):
+    print(resType)
     #client pulls most recent message
-
+    print("yo")
     if (resType == "pull"):
         #select statement
         #returns most recent line sent
-        return sql_db.pull(SID,RID)
+        ret = sql_db.pull(SID,RID)
+        print(ret)
+        return ret
         ##
         ##with open("temp.txt", "r") as f:
         ##    line = f.readlines()
         ##return line
+        
     if (resType == "rsaPublicKey"):
 
 
         #write
         #yreat as normal append public key as message
         rpk = "rsaPublicKey "+message
+        print("hey!!!" + rpk)
         sql_db.write_key(SID,RID,rpk)
         
         return ""
@@ -119,6 +124,7 @@ def add_friend(SID, RID, message, resType):
         #write
         #Treat as normal append Secret key as message. 
         rpk = "SSK "+message
+        print(rpk)
         sql_db.write_key(SID,RID,rpk)        
         return ""
     if (resType == "confirmed"):

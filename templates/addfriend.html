@@ -48,6 +48,7 @@ function myCallback(response,SID, RID) {
         data.append("resType","rsaPublicKey")
         document.getElementById("message").innerHTML = "request sent"
     } else {
+        console.log(responseArray[0])
         responseArray = response.split(" ")
         if(responseArray[0] == "rsaPublicKey"){
             var SSK = keyGen()

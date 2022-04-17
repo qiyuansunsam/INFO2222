@@ -110,7 +110,7 @@ def post_login():
 
 @get('/chatroom')
 def get_chatroom_controller():
-
+ 
     return model.chatroom()
 
 
@@ -121,16 +121,19 @@ def post_chatroom():
 
     # Handle the form processing
     message = request.forms.get('message')
-    SID = request.forms.get('SID')
-    RID = request.forms.get('RID')
-
+    sid = request.forms.get('SID')
+    rid = request.forms.get('RID')
+    print("POST CHATROOM")
+    print(sid)
+    print(message)
+    print(type(message))
     if message is not None:
         # mac = request.forms.get('mac')
         #friday Job 
-        return model.store_message(message,'SID','RID')
+        return model.store_message(message,sid,rid)
     
     
-    return model.get_message(SID, RID)
+    return model.get_message(sid, rid)
     # Call the appropriate method
 
 

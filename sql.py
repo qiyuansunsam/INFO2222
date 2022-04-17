@@ -95,22 +95,18 @@ class SQLDatabase():
     # -----------------------------------------------------------------------------
     # User handling
     # -----------------------------------------------------------------------------
-   
+
     #Testing issue - check that firsttuple[0] is correct
     def pull(self,SID,RID):
         sql_query = """
             SELECT key,timestmp 
             FROM exchange
             WHERE (UIDSEND like {SID} and UIDRECIEVE like {RID}) OR (UIDSEND like {RID} and UIDRECIEVE like {SID})
-            ORDER BY timestmp DESC;
+            ORDER BY timestmp DESC
         """
-        print(SID)
-        print(RID)
         sql_query = sql_query.format(SID=SID,RID=RID)
-        print(sql_query)
         self.execute(sql_query)
-        firsttuple = self.cur.fetchall()
-        print(firsttuple)
+        firsttuple = self.cur.fetchone()
         if firsttuple:
             
             return firsttuple[0]
@@ -298,11 +294,10 @@ class SQLDatabase():
     #Checks to see if a chatlink between sender and reciever exists in table, if it does not exist, create a new one
     #TESTING issue - might not return correctly
     def check_chatlink(self,UIDSEND,UIDRECIEVE):
-
         sql_query = """
                 SELECT CID 
                 FROM chatlink
-                WHERE UIDSEND = '{UIDSEND}' AND UIDRECIEVE = '{UIDRECIEVE}'
+                WHERE UIDSEND = {UIDSEND} AND UIDRECIEVE = {UIDRECIEVE}
             """
 
         sql_query = sql_query.format(UIDSEND=UIDSEND, UIDRECIEVE=UIDRECIEVE)
@@ -346,4 +341,6 @@ class SQLDatabase():
         messagelist = []
         for line in j:
             messagelist.append(line[0])
+        print("getting chatlog")
+        print(messagelist)
         return messagelist

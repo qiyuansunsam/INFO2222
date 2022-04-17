@@ -47,7 +47,7 @@
     $(document).ready(function() {
         var SID = getCookie("SID")
         var RID = getCookie("RID")
-        loadChatlog(SID, RID)
+        loadChatlog(SID,RID)
         // Submit form
         $("#chatroom").submit(function (event) {
             var key = getCookie("bobkey")
@@ -56,6 +56,8 @@
             var message = $("#message").val();
             var encryptedMessage = CryptoJS.AES.encrypt(message, key)
             data.append('message', encryptedMessage);
+            data.append('SID',SID)
+            data.append('RID',RID)
             var HMAC = CryptoJS.HmacSHA256(message, key)
             data.append('mac', HMAC)
             $.ajax({

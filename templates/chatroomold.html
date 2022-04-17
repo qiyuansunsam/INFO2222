@@ -1,0 +1,91 @@
+<p id="newMessages"></p>
+<form id="chatroom" method="post" >
+    <input name="message" type="text" id="message"/>
+</br>
+    <button type="submit">Send</button>
+</form>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+<script>
+    var newMessage = ""
+    function loadChatlog(SID, RID){
+        var deferredObject = $.Deferred();
+        var data = new FormData();
+        data.append('SID', SID);
+        data.append('RID', RID);
+        data.append('message',null)
+        $.ajax({
+                url: "https://127.0.0.1:8081/chatroom",
+                data: data,
+                cache: false,
+                processData: false,
+                contentType: false,
+                type: 'POST',
+                dataType: "text",
+                success: function (data) {
+                    myCallback(data);
+            }
+        })
+    }
+
+    function myCallback(response) {
+        var key = getCookie("bobkey")
+        newMessage = response
+        var newMessages = document.getElementById("newMessages")
+        if (newMessage.length != 2){
+            var messageArray = newMessage.split(" ")
+            for (let i = 0; i < messageArray.length; i++) {
+                var decryptedMessage = CryptoJS.AES.decrypt(messageArray[i], key)
+                var li = document.createElement("p");
+                // After Decrypting the Message, Verify Against the MAC - If verification correct, continue as normal, else ignore message. Maybe Alert
+                li.appendChild(document.createTextNode(decryptedMessage.toString(CryptoJS.enc.Utf8)));
+                newMessages.appendChild(li);
+            }
+            document.getElementById("message").innerHTML = ""
+        }
+    }
+
+    $(document).ready(function() {
+        var SID = getCookie("SID")
+        var RID = getCookie("RID")
+        
+        // Submit form
+        $("#chatroom").submit(function (event) {
+            var key = getCookie("bobkey")
+            var data = new FormData();
+            event.preventDefault();
+            var message = $("#message").val();
+            var encryptedMessage = CryptoJS.AES.encrypt(message, key)
+            data.append('message', encryptedMessage);
+            data.append('SID',SID)
+            data.append('RID',RID)
+            var HMAC = CryptoJS.HmacSHA256(message, key)
+            data.append('mac', HMAC)
+            $.ajax({
+                url: "https://127.0.0.1:8081/chatroom",
+                data: data,
+                cache: false,
+                processData: false,
+                contentType: false,
+                type: 'POST'
+            });
+            document.getElementById("message").innerHTML = ""
+        })
+    });
+
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for(let i = 0; i <ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+</script>

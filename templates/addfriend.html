@@ -48,8 +48,9 @@ function myCallback(response,SID, RID) {
         data.append("resType","rsaPublicKey")
         document.getElementById("message").innerHTML = "request sent"
     } else {
-        console.log(responseArray[0])
+        
         responseArray = response.split(" ")
+        console.log(responseArray[0])
         if(responseArray[0] == "rsaPublicKey"){
             var SSK = keyGen()
             const encryptedSSK = cryptico.encrypt(SSK, responseArray[1]).cipher

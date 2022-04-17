@@ -71,7 +71,6 @@ def chatroom():
 #-----------------------------------------------------------------------------
 def store_message(message,SID,RID):
     ## EDIT THIS
-    print("Hey mate store this message")
     chatID = sql_db.check_chatlink(SID,RID)
     print(chatID)
     sql_db.add_chatlog(chatID,message)
@@ -80,12 +79,9 @@ def store_message(message,SID,RID):
 def get_message(SID, RID):
     ## EDIT THIS
     lines = sql_db.get_chatlog(SID,RID)
-    print("Hello govna")
-    print(lines)
 
     #with open("chatlog.txt", "r") as f:
         #lines = f.readlines()
-
     return lines
 #-----------------------------------------------------------------------------
 def add_friend_page():

@@ -1,7 +1,7 @@
 import sqlite3
 from Crypto.Random import get_random_bytes
 from Crypto.Hash import SHA256
-import bcrypt
+import crypt
 import random
 
 
@@ -143,16 +143,9 @@ class SQLDatabase():
         for i in range(16):
             chars.append(random.choice(ALPHABET))
         salt = "".join(chars)
-        print("adding user")
-        print("user deets")
         password = password+salt
-        print(username)
-        print(password)
         hashobj = SHA256.new(data=password.encode())
         hashedpass = hashobj.hexdigest()
-        print(hashedpass)
-        print('end user')
-
         sql_cmd = """
                 INSERT INTO Users(username,password,admin)
                 VALUES('{username}', '{password}', {admin})
@@ -212,7 +205,6 @@ class SQLDatabase():
             test = self.execute(sql_query)
 
             salt = self.cur.fetchone()
-            print(salt)
 
             # If our query returns
             if salt:
@@ -222,10 +214,8 @@ class SQLDatabase():
                     Where password like '{hash}' and username like '{username}'
                 """
                 concat = password+salt[0]
-                print(concat)
                 hashobj = SHA256.new(data=concat.encode())
                 hashs = hashobj.hexdigest()
-                print(hashs)
                 sql_query = sql_query.format(hash=hashs,username=username)
                 self.execute(sql_query)
                 if self.cur.fetchone():
@@ -250,7 +240,6 @@ class SQLDatabase():
         self.cur.execute(sql_queary)
         p = "<p>Friends:</p>"
         result = self.cur.fetchall()
-        print("")
         for row in result:
             check = self.check_chatlink(UID,row[0])
             if check is not None:
@@ -303,6 +292,8 @@ class SQLDatabase():
         sql_query = sql_query.format(UIDSEND=UIDSEND, UIDRECIEVE=UIDRECIEVE)
         self.execute(sql_query)
         chatID = self.cur.fetchone()
+        print(chatID)
+        print(UIDSEND,UIDRECIEVE)
         # If our query returns
         if chatID:
             return chatID[0]
@@ -326,6 +317,9 @@ class SQLDatabase():
     #returns a tuple at the moment
     #TESTING issue - Might not return correctly
     def get_chatlog(self,UIDSEND,UIDRECIEVE):
+        chatid1 = self.check_chatlink(UIDSEND,UIDRECIEVE)
+        chatid2 = self.check_chatlink(UIDRECIEVE,UIDSEND)
+        print("CIDS "+str(chatid1),str(chatid2))
         sql_cmd = """
                 Select message,timestmp from chatlog
                 Where chatlog.CID = (SELECT chatlink.CID from chatlink where UIDSEND = {UIDSEND} and UIDRECIEVE = {UIDRECIEVE})

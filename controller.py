@@ -123,13 +123,9 @@ def post_chatroom():
     message = request.forms.get('message')
     sid = request.forms.get('SID')
     rid = request.forms.get('RID')
-    print("POST CHATROOM")
-    print(sid)
-    print(message)
-    print(type(message))
     if message is not None:
-        # mac = request.forms.get('mac')
-        #friday Job 
+        mac = request.forms.get('mac')
+        message = message+":"+mac+" "
         return model.store_message(message,sid,rid)
     
     

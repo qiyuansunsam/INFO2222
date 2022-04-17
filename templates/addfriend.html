@@ -9,8 +9,8 @@ function loadLog(SID, RID){
     var data = new FormData();
     data.append('SID', SID);
     data.append('RID', RID);
-    data.append("message","")
-    data.append("resType","pull")
+    data.append("message","");
+    data.append("resType","pull");
     $.ajax({
             url: "https://127.0.0.1:8081/addfriend",
             data: data,
@@ -41,25 +41,23 @@ function myCallback(response,SID, RID) {
             keyObj[parameter] = cryptico.b16to64(rsaKey[parameter].toString(16));
         });
         privateKeyString = JSON.stringify(keyObj);
-        document.cookie = "pk=" + privateKeyString
+        localStorage.setItem(SID+"to"+RID+"pk=", privateKeyString);
 
-
-        data.append("message",rsaPublicKey)
-        data.append("resType","rsaPublicKey")
-        document.getElementById("message").innerHTML = "request sent"
+        data.append("message",rsaPublicKey);
+        data.append("resType","rsaPublicKey");
+        document.getElementById("message").innerHTML = "request sent";
     } else {
         
-        responseArray = response.split(" ")
-        console.log(responseArray[0])
+        responseArray = response.split(" ");
         if(responseArray[0] == "rsaPublicKey"){
-            var SSK = keyGen()
-            const encryptedSSK = cryptico.encrypt(SSK, responseArray[1]).cipher
-            data.append("message",encryptedSSK)
-            data.append("resType","SSK")
-            document.getElementById("message").innerHTML = "request confirmed"
+            var SSK = keyGen();
+            localStorage.setItem(SID+"to"+RID+"key=", SSK);
+            const encryptedSSK = cryptico.encrypt(SSK, responseArray[1]).cipher;
+            data.append("message",encryptedSSK);
+            data.append("resType","SSK");
+            document.getElementById("message").innerHTML = "request confirmed";
         } else if(responseArray[0] == "SSK"){
-            const privateKeyString = getCookie("pk")
-            document.cookie = 'pk=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            const privateKeyString = localStorage.getItem(SID+"to"+RID+"pk=");
             var keyObj = JSON.parse(privateKeyString);
             var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
             var rsa = new RSAKey();
@@ -67,12 +65,13 @@ function myCallback(response,SID, RID) {
                 rsa[parameter] = parseBigInt(cryptico.b64to16(keyObj[parameter].split("|")[0]), 16);
             });
             rsa.e = parseInt("03", 16);
-            var privateKey = rsa
-            const decryptedSSK = cryptico.decrypt(responseArray[1], privateKey)
-            document.cookie = RID+"key="+decryptedSSK.plaintext
-            data.append("message","")
-            data.append("resType","confirmed")
-            document.getElementById("message").innerHTML = "friend added"
+            var privateKey = rsa;
+            const decryptedSSK = cryptico.decrypt(responseArray[1], privateKey);
+            localStorage.setItem(SID+"to"+RID+"key=", decryptedSSK.plaintext);
+            data.append("message","");
+            data.append("resType","confirmed");
+            document.getElementById("message").innerHTML = "friend added";
+            localStorage.removeItem(SID+"to"+RID+"pk=");
         }
     }
     $.ajax({
@@ -87,9 +86,9 @@ function myCallback(response,SID, RID) {
         
 
 $(document).ready(function() {
-    var SID = getCookie("SID")
-    var RID = getCookie("RID")
-    loadLog(SID, RID)
+    var SID = getCookie("SID");
+    var RID = getCookie("RID");
+    loadLog(SID, RID);
     // Submit form
 });
 

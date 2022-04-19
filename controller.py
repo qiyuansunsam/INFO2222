@@ -17,11 +17,8 @@ import model
 def serve_pictures(picture):
     '''
         serve_pictures
-
         Serves images from static/img/
-
         :: picture :: A path to the requested picture
-
         Returns a static file object containing the requested picture
     '''
     return static_file(picture, root='static/img/')
@@ -33,11 +30,8 @@ def serve_pictures(picture):
 def serve_css(css):
     '''
         serve_css
-
         Serves css from static/css/
-
         :: css :: A path to the requested css
-
         Returns a static file object containing the requested css
     '''
     return static_file(css, root='static/css/')
@@ -49,11 +43,8 @@ def serve_css(css):
 def serve_js(js):
     '''
         serve_js
-
         Serves js from static/js/
-
         :: js :: A path to the requested javascript
-
         Returns a static file object containing the requested javascript
     '''
     return static_file(js, root='static/js/')
@@ -68,7 +59,7 @@ def serve_js(js):
 def get_index():
     '''
         get_index
-        
+
         Serves the index page
     '''
     return model.index()
@@ -80,7 +71,7 @@ def get_index():
 def get_login_controller():
     '''
         get_login
-        
+
         Serves the login page
     '''
     return model.login_form()
@@ -92,7 +83,7 @@ def get_login_controller():
 def post_login():
     '''
         post_login
-        
+
         Handles login attempts
         Expects a form containing 'username' and 'password' fields
     '''
@@ -100,17 +91,36 @@ def post_login():
     # Handle the form processing
     username = request.forms.get('username')
     password = request.forms.get('password')
-    
+    print(password)
+
     # Call the appropriate method
     return model.login_check(username, password)
 
 
 
 #-----------------------------------------------------------------------------
+@get('/register')
+def get_register_controller():
+    return model.register_form()
+
+@get('/temp')
+def get_register_controller():
+    return model.view_temp()
+
+#-----------------------------------------------------------------------------
+@post('/register')
+def post_register():
+    username = request.forms.get('username')
+    password = request.forms.get('password')
+    rsaPublicKey = request.forms.get('rsaPublicKey')
+    return model.register(username, password, rsaPublicKey)
+
+
+#-----------------------------------------------------------------------------
 
 @get('/chatroom')
 def get_chatroom_controller():
- 
+
     return model.chatroom()
 
 
@@ -124,11 +134,11 @@ def post_chatroom():
     sid = request.forms.get('SID')
     rid = request.forms.get('RID')
     if message is not None:
-        mac = request.forms.get('mac')
-        message = message+":"+mac+" "
+        message = message+":"+request.forms.get('mac')
+        #friday Job
         return model.store_message(message,sid,rid)
-    
-    
+
+
     return model.get_message(sid, rid)
     # Call the appropriate method
 
@@ -157,7 +167,7 @@ def post_addfriend():
 def get_about():
     '''
         get_about
-        
+
         Serves the about page
     '''
     return model.about()
@@ -167,7 +177,6 @@ def get_about():
 def get_contact():
     '''
         get_about
-
         Serves the about page
     '''
     return model.contact()
@@ -182,5 +191,5 @@ def post_debug(cmd):
 
 # 404 errors, use the same trick for other types of errors
 @error(404)
-def error(error): 
+def error(error):
     return model.handle_errors(error)

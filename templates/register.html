@@ -1,0 +1,64 @@
+<p>${message}</p>
+<form id="register" method="post" >
+    Username: <input name="username" type="text" id="username"/>
+</br>
+    Password: <input name="password" type="password" id="password"/>
+</br>
+    Confirm password: <input name="confirmPassword" type="password" id="confirmPassword"/>
+</br>
+    <input value="register" type="submit" />
+</form>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cryptico/0.0.1343522940/cryptico.js"></script>
+<script>
+
+    $(document).ready(function(e) {
+        $("#register").submit(function (event) {
+            event.preventDefault();
+            var username = $("#username").val();
+            var password = $("#password").val();
+            var confirmPassword = $("#confirmPassword").val();
+            if (password == confirmPassword){
+                const rsaKey = cryptico.generateRSAKey("",1024);
+                const rsaPublicKey = cryptico.publicKeyString(rsaKey);
+
+                var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
+                var keyObj = {};
+                parametersBigint.forEach(function(parameter){
+                    keyObj[parameter] = cryptico.b16to64(rsaKey[parameter].toString(16));
+                });
+                privateKeyString = JSON.stringify(keyObj);
+                localStorage.setItem("privateKey", privateKeyString);
+                localStorage.setItem("publicKey", rsaPublicKey);
+
+                addUser(username,password,rsaPublicKey)
+            } else {
+                alert("password not match, please try again");
+            }
+        })
+    });
+
+    function addUser(username, password, rsaPublicKey){
+        var data = new FormData();
+        console.log(username)
+        data.append('username', username);
+        data.append('password', password);
+        data.append('rsaPublicKey', rsaPublicKey);
+        $.ajax({
+                url: "https://127.0.0.1:8081/register",
+                data: data,
+                cache: false,
+                processData: false,
+                contentType: false,
+                type: 'POST',
+                success: function (data) {
+                    if (data == "-1"){
+                        alert("username taken, please try again")
+                    } else {
+                        window.location.href = "https://127.0.0.1:8081/temp";
+                    }
+                }
+            });
+        }
+</script>

@@ -53,6 +53,7 @@
         // Submit form
         $("#chatroom").submit(function (event) {
             var key = localStorage.getItem(SID+"to"+RID+"key=");
+            console.log(key)
             var data = new FormData();
             event.preventDefault();
             var message = $("#message").val();

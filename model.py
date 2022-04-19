@@ -9,7 +9,6 @@ import view
 import random
 import sql
 
-
 # Initialise our views, all arguments are defaults for the template
 page_view = view.View()
 sql_db = sql.SQLDatabase("samnchad.db")
@@ -49,7 +48,7 @@ def login_check(username, password):
 
     # By default assume good creds
     login = True
-    
+
     login = sql_db.check_credentials(username, password)
     #if username != "admin": # Wrong Username
     #    err_str = "Incorrect Username"
@@ -65,6 +64,23 @@ def login_check(username, password):
         return page_view("invalid", reason=err_str)
 
 #-----------------------------------------------------------------------------
+def view_temp():
+    return page_view("temp")
+
+def register_form():
+    return page_view("register", message="")
+
+#-----------------------------------------------------------------------------
+def register(username, password, publicKey):
+    if sql_db.check_user(username): return "-1"
+    id = sql_db.add_user(username, password)
+    sql_db.fetch_friends_list(id)
+    sql_db.addkey(id, publicKey)
+    return "0"
+
+#-----------------------------------------------------------------------------
+
+
 def chatroom():
     return page_view("chatroom")
 
@@ -72,7 +88,6 @@ def chatroom():
 def store_message(message,SID,RID):
     ## EDIT THIS
     chatID = sql_db.check_chatlink(SID,RID)
-    print(chatID)
     sql_db.add_chatlog(chatID,message)
     return page_view("chatroom")
 #-----------------------------------------------------------------------------
@@ -82,6 +97,7 @@ def get_message(SID, RID):
 
     #with open("chatlog.txt", "r") as f:
         #lines = f.readlines()
+
     return lines
 #-----------------------------------------------------------------------------
 def add_friend_page():
@@ -96,36 +112,31 @@ def add_friend_page():
 
 
 def add_friend(SID, RID, message, resType):
-    print(resType)
     #client pulls most recent message
-    print("yo")
+
     if (resType == "pull"):
         #select statement
         #returns most recent line sent
-        ret = sql_db.pull(SID,RID)
-        print(ret)
-        return ret
+        return sql_db.pull(SID,RID)
         ##
         ##with open("temp.txt", "r") as f:
         ##    line = f.readlines()
         ##return line
-        
     if (resType == "rsaPublicKey"):
 
 
         #write
         #yreat as normal append public key as message
-        rpk = "rsaPublicKey "+message
-        print("hey!!!" + rpk)
+        rpk = "rsaPublicKey "+sql_db.pull_public_key(SID)
+        print(rpk)
         sql_db.write_key(SID,RID,rpk)
-        
+
         return ""
     if (resType == "SSK"):
         #write
-        #Treat as normal append Secret key as message. 
+        #Treat as normal append Secret key as message.
         rpk = "SSK "+message
-        print(rpk)
-        sql_db.write_key(SID,RID,rpk)        
+        sql_db.write_key(SID,RID,rpk)
         return ""
     if (resType == "confirmed"):
         #using a new table - so just remove message with secret key, or delete all messages to "-99"

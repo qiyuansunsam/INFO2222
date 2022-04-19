@@ -84,13 +84,17 @@ class SQLDatabase():
             key TEXT,
             timestmp TIMESTAMP);""")
         self.commit()
-
+        # Add key table
+        self.execute("""CREATE TABLE IF NOT EXISTS pubkeys(
+                    Id INTEGER UNIQUE references Users(Id),
+                    pubkey TEXT);""")
+        self.commit()
         
         # Add our admin user
         self.add_user('admin', admin_password, admin=1)
-        self.add_user('t1', admin_password, admin=1)
-        self.add_user('t2', admin_password, admin=1)
-        self.add_user('t3', admin_password, admin=1)
+        self.add_user('t1', admin_password, admin=0)
+        self.add_user('t2', admin_password, admin=0)
+        self.add_user('t3', admin_password, admin=0)
 
     # -----------------------------------------------------------------------------
     # User handling
@@ -113,6 +117,18 @@ class SQLDatabase():
         else:
             return ""
 
+    def pull_public_key(self, Id):
+        sql_query = """
+                    SELECT pubkey 
+                    FROM pubkeys
+                    WHERE Id like '{Id}'
+                """
+        sql_query = sql_query.format(Id=Id)
+        self.execute(sql_query)
+        t = self.cur.fetchone()[0]
+        print("public key: "+t)
+        return t
+
     def write_key(self,SID,RID,key):
         sql_statement = """
                 INSERT into exchange
@@ -121,6 +137,8 @@ class SQLDatabase():
         sql_statement = sql_statement.format(SID=SID,RID=RID,key=key)
         self.execute(sql_statement)
         self.commit()
+
+
 
 
     #SQL here might not be 100% correct - also 
@@ -138,6 +156,7 @@ class SQLDatabase():
 
     # Add a user to the database
     def add_user(self, username, password, admin=0):
+        print(username)
         ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         chars=[]
         for i in range(16):
@@ -176,8 +195,33 @@ class SQLDatabase():
         self.execute(sql_cmd)
         self.commit()
 
+        return Id
+
+    
+    def addkey(self, Id, pubkey):
+        sql_statement = """
+            INSERT INTO pubkeys(id,pubkey)
+            VALUES('{Id}','{pubkey}')
+            """
+        sql_statement = sql_statement.format(Id=Id, pubkey=pubkey)
+        print(sql_statement)
+        self.execute(sql_statement)
         return True
 
+    def check_user(self, username):
+        sql_query = """
+                    SELECT Id 
+                    FROM Users
+                    WHERE username like '{username}'
+                """
+        sql_query = sql_query.format(username=username)
+        self.execute(sql_query)
+        temp = self.cur.fetchone()
+        print("sssssss")
+        print(temp)
+        print("sssssss")
+        if temp is not None:
+            return True
     # -----------------------------------------------------------------------------
 
     # Check login credentials
@@ -221,7 +265,7 @@ class SQLDatabase():
                 if self.cur.fetchone():
                     #Get friends list function that returns array of friends
                     #pass in array of friends where [2,3] is 
-                    self.fetch_friends_list([2, 3], Id)
+                    self.fetch_friends_list(Id)
                     return True
                 else:
                     return False
@@ -235,7 +279,7 @@ class SQLDatabase():
     # TESTING ISSUE - check_chatlink returns the right variable (could be returning a tuple or something)
     # Need to remove fl since it is unused
     #
-    def fetch_friends_list(self, fl, UID):
+    def fetch_friends_list(self, UID):
         sql_queary = """SELECT * FROM Users"""
         self.cur.execute(sql_queary)
         p = "<p>Friends:</p>"
@@ -307,6 +351,7 @@ class SQLDatabase():
                 VALUES({CID},'{message}',CURRENT_TIMESTAMP)
             """
         sql_cmd = sql_cmd.format(CID=CID,message=message)
+        print(sql_cmd)
         self.execute(sql_cmd)
         self.commit()
         return True

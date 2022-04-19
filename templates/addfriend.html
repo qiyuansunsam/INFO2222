@@ -31,18 +31,8 @@ function myCallback(response,SID, RID) {
     data.append('RID', RID);
 
     if (response == ""){
-        const rsaKey = cryptico.generateRSAKey("",1024);
-        const rsaPublicKey = cryptico.publicKeyString(rsaKey);
-
-
-        var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
-        var keyObj = {};
-        parametersBigint.forEach(function(parameter){
-            keyObj[parameter] = cryptico.b16to64(rsaKey[parameter].toString(16));
-        });
-        privateKeyString = JSON.stringify(keyObj);
-        localStorage.setItem(SID+"to"+RID+"pk=", privateKeyString);
-
+        
+        const rsaPublicKey = localStorage.getItem("publicKey");
         data.append("message",rsaPublicKey);
         data.append("resType","rsaPublicKey");
         document.getElementById("message").innerHTML = "request sent";
@@ -57,7 +47,7 @@ function myCallback(response,SID, RID) {
             data.append("resType","SSK");
             document.getElementById("message").innerHTML = "request confirmed";
         } else if(responseArray[0] == "SSK"){
-            const privateKeyString = localStorage.getItem(SID+"to"+RID+"pk=");
+            const privateKeyString = localStorage.getItem("privateKey");
             var keyObj = JSON.parse(privateKeyString);
             var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
             var rsa = new RSAKey();

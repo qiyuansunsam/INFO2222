@@ -377,9 +377,9 @@ class SQLDatabase():
         print(sql_cmd)
         self.execute(sql_cmd)
         j = self.cur.fetchall()
-        messagelist = []
+        messagelist = ''
         for line in j:
-            messagelist.append(line[0])
+            messagelist += ","+line[0]
         print("getting chatlog")
         print(messagelist)
         return messagelist

@@ -31,10 +31,11 @@
         var SID = getCookie("SID");
         var RID = getCookie("RID");
         var key = localStorage.getItem(SID+"to"+RID+"key=");
-        var responseArray = response.split(" ");
         var newMessages = document.getElementById("newMessages");
-        for (let n = 0; n < responseArray.length; n++){
-            var messageArray = responseArray[n].split(":");
+        response = response.split(",");
+
+        for (let i = 0; i < response.length; i++){
+            var messageArray = response[i].split(":");
             var decryptedMessage = CryptoJS.AES.decrypt(messageArray[0], key);
             var HMAC = CryptoJS.HmacSHA256(decryptedMessage.toString(CryptoJS.enc.Utf8), key);
             if (HMAC.toString() == messageArray[1]){

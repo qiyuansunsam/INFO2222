@@ -8,6 +8,7 @@
 import view
 import random
 import sql
+from Crypto.PublicKey import RSA
 
 # Initialise our views, all arguments are defaults for the template
 page_view = view.View()
@@ -76,7 +77,7 @@ def register(username, password, publicKey):
     id = sql_db.add_user(username, password)
     sql_db.fetch_friends_list(id)
     sql_db.addkey(id, publicKey)
-    return "0"
+    return str(id)
 
 #-----------------------------------------------------------------------------
 
@@ -86,19 +87,12 @@ def chatroom():
 
 #-----------------------------------------------------------------------------
 def store_message(message,SID,RID):
-    ## EDIT THIS
     chatID = sql_db.check_chatlink(SID,RID)
     sql_db.add_chatlog(chatID,message)
     return page_view("chatroom")
 #-----------------------------------------------------------------------------
 def get_message(SID, RID):
-    ## EDIT THIS
-    lines = sql_db.get_chatlog(SID,RID)
-
-    #with open("chatlog.txt", "r") as f:
-        #lines = f.readlines()
-
-    return lines
+    return sql_db.get_chatlog(SID,RID)
 #-----------------------------------------------------------------------------
 def add_friend_page():
     return page_view("addfriend")
@@ -112,36 +106,18 @@ def add_friend_page():
 
 
 def add_friend(SID, RID, message, resType):
-    #client pulls most recent message
-
     if (resType == "pull"):
-        #select statement
-        #returns most recent line sent
         return sql_db.pull(SID,RID)
-        ##
-        ##with open("temp.txt", "r") as f:
-        ##    line = f.readlines()
-        ##return line
     if (resType == "rsaPublicKey"):
-
-
-        #write
-        #yreat as normal append public key as message
         rpk = "rsaPublicKey "+sql_db.pull_public_key(SID)
-        print(rpk)
         sql_db.write_key(SID,RID,rpk)
 
         return ""
     if (resType == "SSK"):
-        #write
-        #Treat as normal append Secret key as message.
-        rpk = "SSK "+message
+        rpk = "SSK "+ sql_db.pull_public_key(SID)+":"+message
         sql_db.write_key(SID,RID,rpk)
         return ""
     if (resType == "confirmed"):
-        #using a new table - so just remove message with secret key, or delete all messages to "-99"
-        # Delete the message with the private key inside.
-        #call function that adds two friends
         sql_db.wipekeys(SID,RID)
         sql_db.create_chatlink(SID,RID)
         return ""

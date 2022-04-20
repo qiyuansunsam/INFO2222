@@ -20,26 +20,26 @@
             var password = $("#password").val();
             var confirmPassword = $("#confirmPassword").val();
             if (password == confirmPassword){
-                const rsaKey = cryptico.generateRSAKey("",1024);
-                const rsaPublicKey = cryptico.publicKeyString(rsaKey);
+                
 
-                var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
-                var keyObj = {};
-                parametersBigint.forEach(function(parameter){
-                    keyObj[parameter] = cryptico.b16to64(rsaKey[parameter].toString(16));
-                });
-                privateKeyString = JSON.stringify(keyObj);
-                localStorage.setItem("privateKey", privateKeyString);
-                localStorage.setItem("publicKey", rsaPublicKey);
-
-                addUser(username,password,rsaPublicKey)
+                addUser(username,password)
             } else {
                 alert("password not match, please try again");
             }
         })
     });
 
-    function addUser(username, password, rsaPublicKey){
+    function addUser(username, password){
+        const rsaKey = cryptico.generateRSAKey("",1024);
+        const rsaPublicKey = cryptico.publicKeyString(rsaKey);
+
+        var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
+        var keyObj = {};
+        parametersBigint.forEach(function(parameter){
+            keyObj[parameter] = cryptico.b16to64(rsaKey[parameter].toString(16));
+        });
+        privateKeyString = JSON.stringify(keyObj);
+        
         var data = new FormData();
         console.log(username)
         data.append('username', username);
@@ -56,6 +56,8 @@
                     if (data == "-1"){
                         alert("username taken, please try again")
                     } else {
+                        localStorage.setItem(data+"privateKey", privateKeyString);
+                        localStorage.setItem(data+"publicKey", rsaPublicKey);
                         window.location.href = "https://127.0.0.1:8081/temp";
                     }
                 }

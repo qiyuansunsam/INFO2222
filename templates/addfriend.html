@@ -32,8 +32,7 @@ function myCallback(response,SID, RID) {
 
     if (response == ""){
         
-        const rsaPublicKey = localStorage.getItem("publicKey");
-        data.append("message",rsaPublicKey);
+        data.append("message","");
         data.append("resType","rsaPublicKey");
         document.getElementById("message").innerHTML = "request sent";
     } else {
@@ -41,13 +40,8 @@ function myCallback(response,SID, RID) {
         responseArray = response.split(" ");
         if(responseArray[0] == "rsaPublicKey"){
             var SSK = keyGen();
-            localStorage.setItem(SID+"to"+RID+"key=", SSK);
-            const encryptedSSK = cryptico.encrypt(SSK, responseArray[1]).cipher;
-            data.append("message",encryptedSSK);
-            data.append("resType","SSK");
-            document.getElementById("message").innerHTML = "request confirmed";
-        } else if(responseArray[0] == "SSK"){
-            const privateKeyString = localStorage.getItem("privateKey");
+
+            const privateKeyString = localStorage.getItem(SID+"privateKey");
             var keyObj = JSON.parse(privateKeyString);
             var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
             var rsa = new RSAKey();
@@ -56,7 +50,26 @@ function myCallback(response,SID, RID) {
             });
             rsa.e = parseInt("03", 16);
             var privateKey = rsa;
-            const decryptedSSK = cryptico.decrypt(responseArray[1], privateKey);
+            localStorage.setItem(SID+"to"+RID+"key=", SSK);
+            //digital signiture on public key encryption on shared secert key
+            const encryptedSSK = cryptico.encrypt(SSK, responseArray[1], privateKey).cipher;
+            data.append("message",encryptedSSK);
+            data.append("resType","SSK");
+            document.getElementById("message").innerHTML = "request confirmed";
+        } else if(responseArray[0] == "SSK"){
+            const privateKeyString = localStorage.getItem(SID+"privateKey");
+            const publicKey = responseArray[1].split(":")[0];
+            const encryptedSSK = responseArray[1].split(":")[1];
+            var keyObj = JSON.parse(privateKeyString);
+            var parametersBigint = ["n", "d", "p", "q", "dmp1", "dmq1", "coeff"];
+            var rsa = new RSAKey();
+            parametersBigint.forEach(function(parameter){
+                rsa[parameter] = parseBigInt(cryptico.b64to16(keyObj[parameter].split("|")[0]), 16);
+            });
+            rsa.e = parseInt("03", 16);
+            var privateKey = rsa;
+            //decrypt signed, public key encrypted shared secert key
+            const decryptedSSK = cryptico.decrypt(encryptedSSK, privateKey, publicKey);
             localStorage.setItem(SID+"to"+RID+"key=", decryptedSSK.plaintext);
             data.append("message","");
             data.append("resType","confirmed");

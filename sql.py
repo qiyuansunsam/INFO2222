@@ -73,6 +73,12 @@ class SQLDatabase():
             timestmp TIMESTAMP);""")
         self.commit()
 
+        self.execute("""CREATE TABLE IF NOT EXISTS Documents(
+                    title TEXT,
+                    link TEXT,
+                    content TEXT);""")
+        self.commit()
+
         self.execute("""CREATE TABLE IF NOT EXISTS salts(
             Id INTEGER UNIQUE references Users(Id),
             salt TEXT);""")
@@ -283,13 +289,20 @@ class SQLDatabase():
         sql_queary = """SELECT * FROM Users"""
         self.cur.execute(sql_queary)
         p = "<p>Friends:</p>"
+        n = "<p>Other Users:</p>"
+        pending = "<p>request pendings:</p>"
         result = self.cur.fetchall()
         for row in result:
             check = self.check_chatlink(UID,row[0])
             if check is not None:
                 p += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + ") href='/chatroom'> " + row[1] + "</a><br>"
             elif row[0] != UID:
-                p += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + ") href='/addfriend'> add friend: " + row[1] + "</a><br>"
+                if self.pull(row[0],UID) is not "":
+                    pending += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + ") href='/addfriend'> " + row[1] + "</a><br>"
+                else:
+                    n += "<a onclick=setUID(" + str(row[0]) + "," + str(UID) + ") href='/addfriend'> " + row[1] + "</a><br>"
+        p += pending
+        p += n
         p += """<script>
         function setUID(RID, SID){
             document.cookie = "RID="+RID
@@ -298,6 +311,71 @@ class SQLDatabase():
         </script>"""
 
         f = open("templates/temp.html", "w")
+        f.write(p)
+        f.close()
+
+
+    def store_documents(self, title, link, content):
+        sql_cmd = """
+                        INSERT INTO Documents(title,link,content)
+                        VALUES('{title}', '{link}', '{content}')
+                    """
+        sql_cmd = sql_cmd.format(title=title,link=link, content=content)
+        print(sql_cmd)
+        self.execute(sql_cmd)
+        return True
+
+
+
+    def render_documents(self):
+        sql_queary = """SELECT * FROM Documents"""
+        self.cur.execute(sql_queary)
+        p = "<p>documents:</p>"
+        result = self.cur.fetchall()
+        print(result)
+        for row in result:
+                p += "<p>"+row[0]+"</p>"
+                p += "<a href=https://"+row[1]+"/> " + row[2] + "</a><br>"
+        p += """
+        <form id="post" method="post" >
+            Title: <input name="title" type="text" id="title"/>
+        </br>
+            Description: <input name="content" type="text" id="content"/>
+        </br>
+            Link: <input name="link" type="text" id="link"/>
+        </br>
+            <button type="submit">Post</button>
+        </form>
+        """
+        p += """
+        
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+<script>
+        $(document).ready(function() {
+            $("#post").submit(function (event) {
+                var key = localStorage.getItem(SID+"to"+RID+"key=");
+                var data = new FormData();
+                event.preventDefault();
+                var title = $("#title").val();
+                var content = $("#content").val();
+                var link = $("#link").val();
+                data.append('title',title);
+                data.append('content',content);
+                data.append('link',link);
+                $.ajax({
+                    url: "https://127.0.0.1:8081/posts",
+                    data: data,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    type: 'POST'
+                });
+            })
+        });
+        </script>"""
+
+        f = open("templates/posts.html", "w")
         f.write(p)
         f.close()
 

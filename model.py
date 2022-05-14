@@ -97,6 +97,17 @@ def get_message(SID, RID):
 def add_friend_page():
     return page_view("addfriend")
 
+
+def get_documents():
+    sql_db.render_documents()
+    return page_view("posts")
+#-----------------------------------------------------------------------------
+def store_documents(title, content, link):
+    sql_db.store_documents(title, link, content)
+    return page_view("posts")
+
+def get_beginners():
+    return page_view("beginners")
 #-----------------------------------------------------------------------------
 ## FriendReq table
 

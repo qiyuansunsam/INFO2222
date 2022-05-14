@@ -143,6 +143,30 @@ def post_chatroom():
     # Call the appropriate method
 
 
+@get('/posts')
+def get_documents():
+
+    return model.get_documents()
+
+
+# -----------------------------------------------------------------------------
+
+@post('/posts')
+def post_documents():
+
+    # Handle the form processing
+    title = request.forms.get('title')
+    content = request.forms.get('content')
+    link = request.forms.get('link')
+
+    return model.store_documents(title, content, link)
+
+@get('/beginners')
+def get_beginners():
+        return model.get_beginners()
+
+
+
 
 # -----------------------------------------------------------------------------
 @get('/addfriend')

@@ -1,0 +1,37 @@
+<p>documents:</p><p>Google</p><a href=https://www.google.com/> go to google</a><br>
+        <form id="post" method="post" >
+            Title: <input name="title" type="text" id="title"/>
+        </br>
+            Description: <input name="content" type="text" id="content"/>
+        </br>
+            Link: <input name="link" type="text" id="link"/>
+        </br>
+            <button type="submit">Post</button>
+        </form>
+        
+        
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+<script>
+        $(document).ready(function() {
+            $("#post").submit(function (event) {
+                var key = localStorage.getItem(SID+"to"+RID+"key=");
+                var data = new FormData();
+                event.preventDefault();
+                var title = $("#title").val();
+                var content = $("#content").val();
+                var link = $("#link").val();
+                data.append('title',title);
+                data.append('content',content);
+                data.append('link',link);
+                $.ajax({
+                    url: "https://127.0.0.1:8081/posts",
+                    data: data,
+                    cache: false,
+                    processData: false,
+                    contentType: false,
+                    type: 'POST'
+                });
+            })
+        });
+        </script>
